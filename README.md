@@ -19,31 +19,33 @@ Para começar a usar qualquer um dos fluxos contidos aqui, siga estes passos:
 
 | Nome do Projeto | Descrição Breve | Tecnologias Chave | Status |
 | :--- | :--- | :--- | :--- |
-| **Agente Educado Groq** | Um chatbot versátil que usa a API Groq (com seu modelo de alta velocidade) e memória simples para responder a qualquer pergunta do usuário e lembrar de conversas anteriores. | n8n, Groq Chat Model, Simple Memory | ✅ Ativo |
-| *[Seu Próximo Projeto]* | *[Adicione a descrição do próximo fluxo que você criar]* | *[Ex: n8n, Google Sheets, Webhook]* | 🚧 Em Desenvolvimento |
+| **Agente Educado Groq (Web)** | Um chatbot versátil que usa a API Groq (com seu modelo de alta velocidade) e memória simples para responder a qualquer pergunta do usuário e lembrar de conversas anteriores. (Web-based) | n8n, Groq Chat Model, Simple Memory | ✅ Ativo |
+| **Agente Educado Groq (Telegram)** | **Versão do Agente Educado integrada ao Telegram. Responde a mensagens em tempo real e salva o histórico da conversa em uma planilha do Google Sheets.** | **n8n, Telegram Trigger, Groq, Google Sheets** | **✅ Ativo** |
 
-## ✨ Destaque: Agente Educado Groq
+## ✨ Destaque: Agente Educado Groq (Telegram)
 
-O primeiro projeto deste repositório é um exemplo prático de como construir um Agente de IA conversacional poderoso usando o n8n.
+O projeto do Telegram demonstra a robustez do n8n na criação de agentes conversacionais que interagem diretamente com o usuário e persistem dados em serviços externos.
 
 ### Visão Geral do Fluxo
 
-O fluxo é acionado por uma mensagem de chat e segue a seguinte lógica:
+O fluxo é acionado por uma mensagem no Telegram e segue a seguinte lógica:
 
-1.  **Gatilho:** `When chat message received`
-2.  **Processamento:** `Edit Fields` (para formatar dados)
-3.  **Log:** `Append row in sheet` (salva o histórico em uma planilha)
-4.  **IA Principal:** `AI Agent` (orquestra a conversa, utiliza memória e ferramentas)
+1.  **Gatilho:** `Telegram Trigger (On Message)` — Acionado por qualquer mensagem de texto recebida.
+2.  **Processamento:** `Edit Fields` (para formatar dados da mensagem).
+3.  **Log:** `Append row in sheet` (salva o usuário, mensagem e timestamp no Google Sheets).
+4.  **IA Principal:** `AI Agent` (orquestra a conversa, utiliza Groq, memória e ferramentas).
     * **Modelo:** Groq Chat Model (rápido e eficiente)
     * **Memória:** Simple Memory
-    * **Ferramenta:** Calculator (para cálculos matemáticos) e Wikipedia (para pesquisa de conhecimento geral)
-5.  **Finalização:** `No Operation, do nothing` (encerra o fluxo)
+    * **Ferramenta:** Calculator e Wikipedia.
+5.  **Resposta:** **`Telegram Action (Send a text message)`** — Envia a resposta gerada pela IA de volta ao Chat ID de origem.
+6.  **Finalização:** `No Operation, do nothing` (encerra o fluxo).
 
 ### Requisitos
 
 * Instância do n8n.
+* **Token do BotFather (Telegram).**
 * Credencial da API **Groq**.
-* Credencial do **Google Sheets** (para o log de histórico, se mantiver o Node).
+* Credencial do **Google Sheets** (para o log de histórico).
 
 ## 🤝 Contribuições
 
