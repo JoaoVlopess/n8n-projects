@@ -56,4 +56,4 @@ Este é um repositório de código aberto e projetos são bem-vindos! Se você t
 3.  Crie um Pull Request, adicionando uma linha na tabela de projetos e uma breve descrição.
 
 ---
-Feito com 💜 por [Seu Nome ou Nome do Projeto]
+Feito por João Lopes!
