@@ -1,0 +1,515 @@
+{
+  "name": "Agente telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "23199625-1b48-4b6d-9720-e72942b4e851",
+              "name": "idConversa",
+              "value": "={{ $json.message.from.id }}",
+              "type": "string"
+            },
+            {
+              "id": "5196a9c8-27f4-49cd-b374-850012443cee",
+              "name": "Mensagem",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "1e86830b-6fab-4e63-943c-c0fbd3dde1e5",
+              "name": "Nome",
+              "value": "={{ $json.message.from.first_name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "2e59bd83-f560-4bcf-b150-8359d568df2b",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Edit Fields').item.json.Mensagem }}",
+        "options": {
+          "systemMessage": "Entendi! Você está usando o AI Agent do n8n e precisa configurar corretamente. Vejo que o erro é porque está tentando usar uma tool que não existe. Vou te ajudar a configurar!\nConfiguração do AI Agent\n1. Desabilitar \"Require Specific Output Format\"\nPrimeiro, DESLIGUE o botão \"Require Specific Output Format\" (está verde na sua imagem). Isso está causando o erro da tool.\n2. Configurar o System Message Corretamente\nNo campo System Message, use este prompt otimizado:\nVocê é um assistente que agenda aulas de violão. \n\nAnalise a mensagem do aluno e extraia as informações necessárias.\n\nSEMPRE retorne sua resposta em formato JSON válido, sem markdown, sem explicações extras.\n\nSe a mensagem contiver NOME, DIA e HORÁRIO, retorne:\n{\n  \"action\": \"schedule_class\",\n  \"student_name\": \"nome completo do aluno\",\n  \"start_time\": \"YYYY-MM-DDTHH:MM:SS-03:00\",\n  \"duration_hours\": 1,\n  \"summary\": \"Aula de violão - [nome do aluno]\"\n}\n\nSe FALTAR qualquer informação (nome OU dia OU horário), retorne:\n{\n  \"action\": \"missing_data\",\n  \"missing\": \"descreva o que está faltando\"\n}\n\nREGRAS IMPORTANTES:\n- O formato start_time deve ser ISO 8601 com fuso horário do Brasil (-03:00)\n- Se não especificar duração, use 1 hora\n- Interprete datas relativas (amanhã, segunda que vem, etc)\n- Data de hoje: {{ $now.toFormat('dd/MM/yyyy') }}\n- Hora atual: {{ $now.toFormat('HH:mm') }}\n\nRetorne APENAS o JSON, nada mais."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        608,
+        0
+      ],
+      "id": "98c8f61b-c8df-45bf-9044-924b2f46e4d2",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.idConversa }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        624,
+        208
+      ],
+      "id": "70c3ec89-af19-4461-836a-7a5f12131d62",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -272,
+        16
+      ],
+      "id": "3c7462cd-f8ca-4e22-96ea-2bb04a2afbe5",
+      "name": "Telegram Trigger",
+      "webhookId": "ff214324-fdb2-4cdd-92b0-baf30aee19f6",
+      "credentials": {
+        "telegramApi": {
+          "id": "4QO8AdIuyhu5CiQm",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "51121ccc-fa99-4028-acbc-ca5a91edfffa",
+              "leftValue": "={{ $json.message.from.is_bot }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -48,
+        16
+      ],
+      "id": "b2ea9154-2472-4e21-a6ef-278f72e14248",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        144,
+        208
+      ],
+      "id": "a21e5bc6-a811-4266-bb58-c54cdb37307c",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.idConversa }}",
+        "text": "=❌ Horário indisponível!\n\nDesculpe, {{ $('Edit Fields1').item.json.nome_do_aluno }}, já tenho um compromisso agendado para:\n\n📅 {{ DateTime.fromISO($('Edit Fields1').item.json.hora_inicio).setLocale('pt-BR').toFormat('dd/MM/yyyy') }}\n🕐 {{ DateTime.fromISO($('Edit Fields1').item.json.hora_inicio).toFormat('HH:mm') }}\n\nPode me sugerir outro horário? 🎸",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1776,
+        -80
+      ],
+      "id": "89c71f3b-51f1-47e2-9ac2-96d230333bc8",
+      "name": "Send a text message",
+      "webhookId": "b52b9466-d30c-4fa1-9635-bce35d744df4",
+      "credentials": {
+        "telegramApi": {
+          "id": "4QO8AdIuyhu5CiQm",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        480,
+        208
+      ],
+      "id": "6a71dc8f-1d42-4205-8bb8-ab4216f7c91f",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "x7ovql96cbUivwp3",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "18ca2300-9b99-4e05-ab13-c52a76fe8cb4",
+              "name": "ação",
+              "value": "={{ JSON.parse($json.output).action }}",
+              "type": "string"
+            },
+            {
+              "id": "83ea57d5-ea53-4e3c-98cc-7ef5bd94ca38",
+              "name": "nome_do_aluno",
+              "value": "={{ JSON.parse($json.output).student_name }}",
+              "type": "string"
+            },
+            {
+              "id": "bc52375d-24ed-4c15-bfaa-52aa23ab111c",
+              "name": "hora_inicio",
+              "value": "={{ JSON.parse($json.output).start_time }}",
+              "type": "string"
+            },
+            {
+              "id": "50a9e56e-50b0-46a3-8cbe-7a7d244b0cbc",
+              "name": "duracao_horas",
+              "value": "={{ JSON.parse($json.output).duration_hours }}",
+              "type": "string"
+            },
+            {
+              "id": "a8f62fa6-a61d-4ffb-8351-d26cda1f9784",
+              "name": "titulo",
+              "value": "={{ JSON.parse($json.output).summary }}",
+              "type": "string"
+            },
+            {
+              "id": "4bb87423-2ffb-41ba-aa31-4523af2185ba",
+              "name": "erro",
+              "value": "={{ JSON.parse($json.output).missing || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        0
+      ],
+      "id": "bd6a6245-9be2-400e-939b-cd5bed3971be",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "joaovlopes.carvalho@gmail.com",
+          "mode": "list",
+          "cachedResultName": "joaovlopes.carvalho@gmail.com"
+        },
+        "start": "={{ $('Edit Fields1').item.json.hora_inicio }}",
+        "end": "={{ new Date($('Edit Fields1').item.json.hora_inicio).plus($('Edit Fields1').item.json.duracao_horas, 'hour') }}",
+        "additionalFields": {
+          "description": "=Aula de violão com {{ $('Edit Fields1').item.json.nome_do_aluno }}",
+          "summary": "={{ $('Edit Fields1').item.json.titulo }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1728,
+        96
+      ],
+      "id": "edd46a16-fdba-4750-9846-114d4f678f91",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "wKcecTosxmrqKoeX",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "joaovlopes.carvalho@gmail.com",
+          "mode": "list",
+          "cachedResultName": "joaovlopes.carvalho@gmail.com"
+        },
+        "limit": 10,
+        "timeMin": "={{ $json.hora_inicio }}",
+        "timeMax": "={{ new Date($json.hora_inicio).plus($json.duracao_horas, 'hour') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "520b64e1-f90b-4523-b7b0-25479764d67c",
+      "name": "Get many events",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "wKcecTosxmrqKoeX",
+          "name": "Google Calendar account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a301616f-9749-4952-b780-fff346a7b589",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1488,
+        0
+      ],
+      "id": "b70092fe-3a3c-4f01-b3e3-ac6617999d74",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.idConversa }}",
+        "text": "=✅ Aula confirmada com sucesso!\n\n👤 Aluno: {{ $('Edit Fields1').item.json.nome_do_aluno }}\n📅 Data: {{ DateTime.fromISO($('Edit Fields1').item.json.hora_inicio).setLocale('pt-BR').toFormat('dd/MM/yyyy') }}\n🕐 Horário: {{ DateTime.fromISO($('Edit Fields1').item.json.hora_inicio).toFormat('HH:mm') }}\n⏱️ Duração: {{ $('Edit Fields1').item.json.duracao_horas }}h\n\nNos vemos lá! 🎸",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1904,
+        96
+      ],
+      "id": "b46e2efb-0bc2-4996-9cfa-99e05e1edef2",
+      "name": "Send a text message1",
+      "webhookId": "b52b9466-d30c-4fa1-9635-bce35d744df4",
+      "credentials": {
+        "telegramApi": {
+          "id": "4QO8AdIuyhu5CiQm",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        96
+      ],
+      "id": "d19f5b7a-1cc7-49ed-804e-67780f1e7bc0",
+      "name": "No Operation, do nothing2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Get many events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many events": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message1": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8ea813f2-be5b-4303-85e6-9e7f6755fb02",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f6d029752b9da53bb07a9fdb7d603401b6cf1e8bb59a6201a7d42ab3395be56b"
+  },
+  "id": "llLtCHMfK1Ydr74x",
+  "tags": []
+}
